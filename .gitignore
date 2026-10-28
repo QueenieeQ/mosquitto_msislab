@@ -1,0 +1,24 @@
+# Python environments and caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.ruff_cache/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Inference outputs
+output/
+runs/
+
+# Large model weights (keep models/cls_labels.txt)
+*.pt
+*.onnx
+*.pth
+*.engine
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
