@@ -4,7 +4,19 @@ version = "0.1.0"
 requires-python = ">=3.10,<3.13"
 dependencies = [
     "ultralytics>=8.3",
-    "onnxruntime>=1.18",   # use onnxruntime-gpu instead on a CUDA machine
+    "onnxruntime-gpu>=1.22,<1.24",   # CUDA 12 builds (1.24+ target CUDA 13, needs a newer driver)
     "opencv-python>=4.8",
     "numpy>=1.26",
+    "torch",
+    "torchvision",
 ]
+
+# Driver supports CUDA 12.7, so use PyTorch's cu126 wheels (default PyPI torch needs a newer driver)
+[tool.uv.sources]
+torch = { index = "pytorch-cu126" }
+torchvision = { index = "pytorch-cu126" }
+
+[[tool.uv.index]]
+name = "pytorch-cu126"
+url = "https://download.pytorch.org/whl/cu126"
+explicit = true
