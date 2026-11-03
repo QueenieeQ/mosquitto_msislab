@@ -1,0 +1,363 @@
+detection_csv_log_enabled:
+  name: Detection CSV Log
+  access: msislab
+  definition: Append every process() result (one row per S<n>/ROI slot) to logs/vision/<stage>/[dry_test/]models/model_1/<YYYYMMDD>/<HHMMSS>/model_1_detection.csv (0/1); can also be overridden per shot (detection_csv_log.py)
+  Min: 0
+  Max: 1
+  Default: 1
+  Best: 1
+  Step: 1
+  Current: 1
+debug_enabled:
+  name: Debug
+  access: msislab
+  definition: Enable debug logging (0/1)
+  Min: 0
+  Max: 1
+  Default: 0
+  Best: 0
+  Step: 1
+  Current: 1
+
+debug_level:
+  name: Debug Level
+  access: msislab
+  definition: Debug level (0-5)
+  Min: 0
+  Max: 7
+  Default: 5
+  Best: 5
+  Step: 1
+  Current: 7
+
+debug_step_images:
+  name: Debug Step Images
+  access: msislab
+  definition: Save intermediate images for debugging (0/1)
+  Min: 0
+  Max: 1
+  Default: 0
+  Best: 0
+  Step: 1
+  Current: 1
+
+log_rotation_mb:
+  name: Log Rotation Size
+  access: msislab
+  definition: Rotate the log file when it exceeds this size (MB)
+  Min: 1
+  Max: 1024
+  Default: 50
+  Best: 50
+  Step: 1
+  Current: 50
+
+log_retention_days:
+  name: Log Retention
+  access: msislab
+  definition: Delete rotated log files older than this many days
+  Min: 1
+  Max: 365
+  Default: 14
+  Best: 14
+  Step: 1
+  Current: 14
+
+det_imgsz:
+  name: Detector Image Size
+  access: msislab
+  definition: Mosquito detector input size (px)
+  Min: 320
+  Max: 4096
+  Default: 1520
+  Best: 1520
+  Step: 32
+  Current: 1520
+
+det_conf:
+  name: Detection Threshold
+  access: msislab
+  definition: "DetectionThreshold: min confidence for detector and body detector"
+  Min: 0.0
+  Max: 1.0
+  Default: 0.25
+  Best: 0.25
+  Step: 0.01
+  Current: 0.25
+
+det_iou:
+  name: Detector NMS IoU
+  access: msislab
+  definition: NMS IoU of the mosquito detector
+  Min: 0.0
+  Max: 1.0
+  Default: 0.5
+  Best: 0.5
+  Step: 0.01
+  Current: 0.5
+
+body_imgsz:
+  name: Body Detector Image Size
+  access: msislab
+  definition: Body detector input size (px)
+  Min: 128
+  Max: 2048
+  Default: 512
+  Best: 512
+  Step: 32
+  Current: 512
+
+merge_thr:
+  name: Merge Overlap Threshold
+  access: msislab
+  definition: MergeOverlapThresholdMosquito[Body]
+  Min: 0.0
+  Max: 1.0
+  Default: 0.4
+  Best: 0.4
+  Step: 0.01
+  Current: 0.4
+
+merge_iter:
+  name: Merge Iterations
+  access: msislab
+  definition: MergeIterationsMosquito[Body]
+  Min: 1
+  Max: 10
+  Default: 1
+  Best: 1
+  Step: 1
+  Current: 1
+
+body_org_thr:
+  name: Body Merge On Original Scale
+  access: msislab
+  definition: MosquitoBodyMergeOnOrgScaleThreshold
+  Min: 0.0
+  Max: 1.0
+  Default: 0.6
+  Best: 0.6
+  Step: 0.01
+  Current: 0.6
+
+cls_thr:
+  name: Classification Threshold
+  access: msislab
+  definition: "ClassificationThreshold: below it the label is 'unknown'"
+  Min: 0.0
+  Max: 1.0
+  Default: 0.1
+  Best: 0.1
+  Step: 0.01
+  Current: 0.1
+
+cls_size:
+  name: Classifier Input Size
+  access: msislab
+  definition: Classifier input size (px)
+  Min: 64
+  Max: 1024
+  Default: 384
+  Best: 384
+  Step: 32
+  Current: 384
+
+cls_batch:
+  name: Classifier Batch Size
+  access: msislab
+  definition: Crops per classifier batch
+  Min: 1
+  Max: 64
+  Default: 8
+  Best: 8
+  Step: 1
+  Current: 8
+
+
+# ---- Paths -----------------------------------------------------------------
+# Relative paths are resolved against the directory containing infer.py.
+# CLI flags (--models, --output, --device) override these when given.
+
+log_dir:
+  name: Log Directory
+  access: msislab
+  definition: Directory for the rotating infer_<date>.log files
+  Default: logging
+  Current: logging
+
+models_dir:
+  name: Models Directory
+  access: msislab
+  definition: Directory holding the detector, body detector, classifier and label files
+  Default: models
+  Current: models
+
+det_model:
+  name: Detector Weights
+  access: msislab
+  definition: Mosquito detector (YOLOv8s) weights file inside models_dir
+  Default: mosquito_det.pt
+  Current: mosquito_det.pt
+
+body_model:
+  name: Body Detector Weights
+  access: msislab
+  definition: Mosquito body detector (YOLOv8n) weights file inside models_dir
+  Default: mosquito_body_det.pt
+  Current: mosquito_body_det.pt
+
+cls_model:
+  name: Classifier Model
+  access: msislab
+  definition: SwinV2 classifier ONNX file inside models_dir
+  Default: mosquito_cls.onnx
+  Current: mosquito_cls.onnx
+
+cls_labels:
+  name: Classifier Labels
+  access: msislab
+  definition: Class label file (one label per line) inside models_dir
+  Default: cls_labels.txt
+  Current: cls_labels.txt
+
+output_dir:
+  name: Output Directory
+  access: msislab
+  definition: Directory for annotated images and results.json
+  Default: output
+  Current: output
+
+image_extensions:
+  name: Image Extensions
+  access: msislab
+  definition: File suffixes picked up when --input is a directory (lower case, with dot)
+  Default: [".jpg", ".jpeg", ".png"]
+  Current: [".jpg", ".jpeg", ".png"]
+
+# ---- Runtime / devices -----------------------------------------------------
+
+device:
+  name: Ultralytics Device
+  access: msislab
+  definition: "Device for the YOLO detectors, e.g. cpu, 0 (null = ultralytics auto-select)"
+  Default: null
+  Current: null
+
+onnx_providers:
+  name: ONNX Execution Providers
+  access: msislab
+  definition: Classifier onnxruntime providers in priority order
+  Default: [CUDAExecutionProvider, CPUExecutionProvider]
+  Current: [CUDAExecutionProvider, CPUExecutionProvider]
+
+onnx_preload_dlls:
+  name: Preload ONNX CUDA DLLs
+  access: msislab
+  definition: Call onnxruntime.preload_dlls() to find pip-installed CUDA/cuDNN libs (0/1)
+  Min: 0
+  Max: 1
+  Default: 1
+  Best: 1
+  Step: 1
+  Current: 1
+
+# ---- Classifier preprocessing ----------------------------------------------
+
+cls_mean:
+  name: Classifier Mean (RGB)
+  access: msislab
+  definition: Per-channel mean in 0-255 RGB, from the training config; also the fill colour for masked-out pixels
+  Default: [123.675, 116.28, 103.53]
+  Current: [123.675, 116.28, 103.53]
+
+cls_std:
+  name: Classifier Std (RGB)
+  access: msislab
+  definition: Per-channel std in 0-255 RGB, from the training config
+  Default: [58.395, 57.12, 57.375]
+  Current: [58.395, 57.12, 57.375]
+
+softmax_atol:
+  name: Softmax Detection Tolerance
+  access: msislab
+  definition: Classifier output is treated as logits (softmax applied) when its rows do not sum to 1 within this tolerance
+  Min: 0.0
+  Max: 1.0
+  Default: 0.001
+  Best: 0.001
+  Step: 0.0001
+  Current: 0.001
+
+# ---- Visualisation ---------------------------------------------------------
+
+draw_ref_size:
+  name: Drawing Reference Size
+  access: msislab
+  definition: Longest image side (px) at which drawing scale is 1.0; larger frames scale up
+  Min: 100
+  Max: 10000
+  Default: 1600
+  Best: 1600
+  Step: 100
+  Current: 1600
+
+draw_line_width:
+  name: Box Line Width
+  access: msislab
+  definition: Box line width (px) at scale 1.0 (minimum 2 after scaling)
+  Min: 1
+  Max: 20
+  Default: 2
+  Best: 2
+  Step: 1
+  Current: 2
+
+draw_font_scale:
+  name: Label Font Scale
+  access: msislab
+  definition: Label font scale at drawing scale 1.0
+  Min: 0.1
+  Max: 5.0
+  Default: 0.6
+  Best: 0.6
+  Step: 0.1
+  Current: 0.6
+
+draw_label_offset:
+  name: Label Offset
+  access: msislab
+  definition: Gap (px) between the label baseline and the top of the stage-1 box
+  Min: 0
+  Max: 100
+  Default: 6
+  Best: 6
+  Step: 1
+  Current: 6
+
+det1_color:
+  name: Stage 1 Box Colour (BGR)
+  access: msislab
+  definition: Stage 1 (mosquito detector) box colour
+  Default: [0, 255, 0]
+  Current: [0, 255, 0]
+
+det2_color:
+  name: Stage 2 Box Colour (BGR)
+  access: msislab
+  definition: Stage 2 (body detector) box colour
+  Default: [255, 128, 0]
+  Current: [255, 128, 0]
+
+label_text_color:
+  name: Label Text Colour (BGR)
+  access: msislab
+  definition: Stage 3 label text colour
+  Default: [0, 255, 0]
+  Current: [0, 255, 0]
+
+label_bg_color:
+  name: Label Background Colour (BGR)
+  access: msislab
+  definition: Stage 3 label background colour
+  Default: [0, 0, 0]
+  Current: [0, 0, 0]
