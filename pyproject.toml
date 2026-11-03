@@ -7,6 +7,8 @@ dependencies = [
     "onnxruntime-gpu>=1.22,<1.24",   # CUDA 12 builds (1.24+ target CUDA 13, needs a newer driver)
     "opencv-python>=4.8",
     "numpy>=1.26",
+    "loguru>=0.7",
+    "pyyaml>=6",
     "torch",
     "torchvision",
 ]
