@@ -1,0 +1,21 @@
+services:
+  infer:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: mosquito-msis:latest
+    # same as `docker run --gpus all`; needs NVIDIA Container Toolkit on the host
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    volumes:
+      - ../models:/app/models:ro      # mosquito_det.pt, mosquito_body_det.pt, mosquito_cls.onnx, cls_labels.txt
+      - ../config:/app/config:ro
+      - ../samples:/app/samples:ro
+      - ../output:/app/output
+      - ../logging:/app/logging
+    command: ["--input", "samples"]
