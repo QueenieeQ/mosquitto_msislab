@@ -9,6 +9,7 @@ parameter names in PhamcleConfig.cs and Docs/handover; they are a close match, n
 """
 import argparse
 import json
+import os
 import time
 from pathlib import Path
 
@@ -17,11 +18,12 @@ from loguru import logger
 
 import cv2
 import numpy as np
-import onnxruntime as ort
 from ultralytics import YOLO
 
+from cls_backend import load_classifier
+
 BASE = Path(__file__).resolve().parent
-CONFIG_PATH = BASE / "config" / "config.yaml"
+CONFIG_PATH = Path(os.environ.get("INFER_CONFIG", BASE / "config" / "config.yaml"))  # override for batch evaluation
 # debug_level (0-7) -> minimum loguru level; higher = more verbose
 LEVELS = ["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG", "TRACE", "TRACE", "TRACE"]
 
@@ -102,12 +104,12 @@ def voronoi_crop(crop, body_boxes, k, fill_rgb):
     return sub
 
 
-def classify(sess, crops_bgr, size, mean, std, softmax_atol):
+def classify(run, crops_bgr, size, mean, std, softmax_atol):  # run.is_prob: already probabilities (sigmoid), keep as is
     """Batch of BGR crops -> (N, num_classes) probabilities."""
     x = np.stack([(cv2.cvtColor(cv2.resize(c, (size, size), interpolation=cv2.INTER_LINEAR), cv2.COLOR_BGR2RGB)
                    .astype(np.float32) - mean) / std for c in crops_bgr]).transpose(0, 3, 1, 2)
-    out = sess.run(None, {sess.get_inputs()[0].name: np.ascontiguousarray(x)})[0]
-    if not np.allclose(out.sum(1), 1.0, atol=softmax_atol):  # logits -> softmax
+    out = run(x)
+    if not getattr(run, "is_prob", False) and not np.allclose(out.sum(1), 1.0, atol=softmax_atol):  # logits -> softmax
         e = np.exp(out - out.max(1, keepdims=True))
         out = e / e.sum(1, keepdims=True)
     return out
@@ -131,6 +133,8 @@ def main():
     ap.add_argument("--input", required=True, help="image file or directory")
     ap.add_argument("--models", default=cfg["models_dir"])
     ap.add_argument("--output", default=cfg["output_dir"])
+    ap.add_argument("--cls-model", default=cfg["cls_model"],
+                    help="classifier file: .onnx or an mmpretrain .pth checkpoint; relative to --models unless absolute")
     ap.add_argument("--device", default=cfg["device"], help="e.g. cpu, 0")
     a = ap.parse_args()
     setup_logging(cfg)
@@ -144,12 +148,14 @@ def main():
     det = YOLO(m / cfg["det_model"])
     body = YOLO(m / cfg["body_model"])
     labels = [s.strip() for s in (m / cfg["cls_labels"]).read_text(encoding="utf-8").splitlines() if s.strip()]
-    if int(cfg["onnx_preload_dlls"]):
-        try:
-            ort.preload_dlls()  # find pip-installed CUDA/cuDNN libs
-        except Exception:
-            pass
-    sess = ort.InferenceSession(str(m / cfg["cls_model"]), providers=list(cfg["onnx_providers"]))
+    cls_path = Path(a.cls_model)
+    cls_path = cls_path if cls_path.is_absolute() else m / cls_path
+    run_cls = load_classifier(cls_path, cfg, a.device)
+    logger.info("classifier: {}", cls_path)
+    cls_size = int(cfg["cls_size"])
+    if hasattr(run_cls, "classes"):  # species checkpoint: its own labels, normalisation and input size
+        labels, mean, std, cls_size = run_cls.classes, run_cls.mean, run_cls.std, run_cls.size
+        fill_rgb = mean
 
     src = Path(a.input)
     files = [src] if src.is_file() else sorted(p for p in src.rglob("*") if p.suffix.lower() in exts)
@@ -220,7 +226,7 @@ def main():
         crops = [voronoi_crop(i["crop"], i["rel"], i["k"], fill_rgb) for i in items]
         for n, c in enumerate(crops, 1):
             save_step(f"step_05_classifier_input_{n:02d}", c)
-        probs = np.concatenate([classify(sess, crops[s:s + int(cfg['cls_batch'])], int(cfg['cls_size']), mean, std, cfg['softmax_atol']) for s in range(0, len(crops), int(cfg['cls_batch']))]) \
+        probs = np.concatenate([classify(run_cls, crops[s:s + int(cfg['cls_batch'])], cls_size, mean, std, cfg['softmax_atol']) for s in range(0, len(crops), int(cfg['cls_batch']))]) \
             if crops else np.zeros((0, len(labels)))
 
         dets = []
@@ -230,7 +236,8 @@ def main():
             i2 = int(order[1]) if len(order) > 1 else None
             known = p[i1] >= cfg['cls_thr']
             d = {"det1": xywh(it["det1"]), "det2": xywh(it["body"]),
-                 "label": labels[i1] if known else "unknown", "score": round(float(p[i1]), 4) if known else 0.0}
+                 "label": labels[i1] if known else "unknown", "score": round(float(p[i1]), 4) if known else 0.0,
+                 "probs": [round(float(x), 4) for x in p]}  # full softmax, in cls_labels.txt order
             if i2 is not None and known:
                 d.update(label2=labels[i2], score2=round(float(p[i2]), 4))
             dets.append(d)

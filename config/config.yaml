@@ -209,7 +209,7 @@ body_model:
 cls_model:
   name: Classifier Model
   access: msislab
-  definition: SwinV2 classifier ONNX file inside models_dir
+  definition: SwinV2 classifier inside models_dir (.onnx, or an mmpretrain .pth checkpoint; absolute paths allowed)
   Default: mosquito_cls.onnx
   Current: mosquito_cls.onnx
 
